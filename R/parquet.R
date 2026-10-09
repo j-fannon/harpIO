@@ -121,7 +121,7 @@ read_fcparquet <- function(
   }
 
   # Filter to vertical level
-  if (!is.null(level_col)) {
+  if (!is.null(level_col) && param$level != -999) {
     fcst <- dplyr::filter(fcst, .data[[level_col]] %in% param$level)
   }
 
