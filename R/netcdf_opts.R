@@ -77,7 +77,9 @@ netcdf_opts <- function(
     "met_norway_ifshires",
     "wrf",
     "wrf_u_stagger",
-    "wrf_v_stagger"
+    "wrf_v_stagger",
+    "mera_netcdf",
+    "uwcw_netcdf"
   ),
   param_find       = list(),
   proj4_var        = "projection_lambert",
@@ -95,7 +97,10 @@ netcdf_opts <- function(
   member_var       = NA,
   time_var         = "time",
   ref_time_var     = NA,
-  force_param_name = FALSE
+  force_param_name = FALSE,
+  values_dim       = NULL,
+  nx               = NULL,
+  ny               = NULL
 )  {
 
   options_set <- match.arg(options_set)
@@ -151,6 +156,22 @@ netcdf_opts <- function(
       lon_var  <- "XLONG_V"
       lat_var  <- "XLAT_V"
       time_var <- "Times"
+    },
+    "mera_netcdf" = {
+      proj4      <- "+proj=lcc +lat_1=53.5 +lat_2=53.5 +lon_0=5.0 +R=6367470"
+      values_dim <- "values"
+      dx         <- 2500
+      dy         <- 2500
+      nx         <- if(is.null(nx)){nx<-529}else{NULL}
+      ny         <- if(is.null(ny)){ny<-489}else{NULL}
+    },
+    "uwcw_netcdf" = {
+      proj4      <- "+proj=lcc +lat_1=55.5 +lat_2=55.5 +lon_0=-8 +R=6371229"
+      values_dim <- "values"
+      dx         <- 2000
+      dy         <- 2000
+      nx         <- if(is.null(nx)){nx<-1909}else{NULL}
+      ny         <- if(is.null(ny)){ny<-1609}else{NULL}
     }
 
   )
@@ -173,6 +194,9 @@ netcdf_opts <- function(
     member_var       = member_var,
     time_var         = time_var,
     ref_time_var     = ref_time_var,
-    force_param_name = force_param_name
+    force_param_name = force_param_name,
+    values_dim       = values_dim,
+    nx               = nx,
+    ny               = ny
   )
 }
