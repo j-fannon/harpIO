@@ -89,7 +89,7 @@ read_netcdf <- function(
   param_info <- param_info[sapply(param_info, function(x) all(unlist(x[["nc_param"]]) %in% nc_vars))]
 
   nc_dims        <- names(nc_id$dim)
-  if (!is.null(opts[["values_dim"]])) {
+  if (!is.null(format_opts[["values_dim"]])) {
     rdv <- c("values_dim")
   } else {
     rdv <- c("x_dim","y_dim")
@@ -245,14 +245,14 @@ make_nc_info <- function(param, info_df, nc_id, file_name) {
 # Function to get nc info for a harp parameter
 get_nc_info <- function(nc_param, param, nc_id, info_df) {
   nc_dims_raw <- sapply(nc_id[["var"]][[nc_param]][["dim"]], function(x) x[["name"]])
-  param[["opts"]] <- dimnames_from_var(param[["opts"]], nc_dims_raw)
-  nc_dims     <- sort(nc_dims_raw)
-  if (!is.null(opts[["values_dim"]])) {
+  if (!is.null(param[["opts"]][["values_dim"]])) {
     rdv <- c("values_dim")
   } else {
     rdv <- c("x_dim","y_dim")
   }
   rdv <- c(rdv, "z_var", "member_var", "time_var")
+  param[["opts"]] <- dimnames_from_var(param[["opts"]], nc_dims_raw)
+  nc_dims     <- sort(nc_dims_raw)
   opts_dims   <- sort(stats::na.omit(unlist(
     param[["opts"]][rdv], use.names = FALSE
   )))
