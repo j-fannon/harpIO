@@ -89,8 +89,14 @@ read_netcdf <- function(
   param_info <- param_info[sapply(param_info, function(x) all(unlist(x[["nc_param"]]) %in% nc_vars))]
 
   nc_dims        <- names(nc_id$dim)
+  if (!is.null(opts[["values_dim"]])) {
+    rdv <- c("values_dim")
+  } else {
+    rdv <- c("x_dim","y_dim")
+  }
+  rdv <- c(rdv,"z_var", "member_var", "time_var")
   requested_dims <- unique(stats::na.omit(unlist(lapply(
-    param_info, function(x) x[["opts"]][c("x_dim", "y_dim", "z_var", "member_var", "time_var")]
+    param_info, function(x) x[["opts"]][rdv]
   ))))
   missing_dims   <- setdiff(requested_dims, nc_dims)
   if (length(missing_dims) > 0) {
@@ -241,8 +247,14 @@ get_nc_info <- function(nc_param, param, nc_id, info_df) {
   nc_dims_raw <- sapply(nc_id[["var"]][[nc_param]][["dim"]], function(x) x[["name"]])
   param[["opts"]] <- dimnames_from_var(param[["opts"]], nc_dims_raw)
   nc_dims     <- sort(nc_dims_raw)
+  if (!is.null(opts[["values_dim"]])) {
+    rdv <- c("values_dim")
+  } else {
+    rdv <- c("x_dim","y_dim")
+  }
+  rdv <- c(rdv, "z_var", "member_var", "time_var")
   opts_dims   <- sort(stats::na.omit(unlist(
-    param[["opts"]][c("x_dim", "y_dim", "z_var", "member_var", "time_var")], use.names = FALSE
+    param[["opts"]][rdv], use.names = FALSE
   )))
 
 
@@ -465,9 +477,17 @@ read_and_transform_netcdf <- function(
 
       file_opts <- nc_opts[[i]][["opts"]]
 
+      flattened <- !is.null(file_opts[["values_dim"]])
       nc_var_dims <- sapply(nc_id$var[[nc_info$nc_param[i]]]$dim, function(x) x$name)
-      x_pos       <- which(nc_var_dims == file_opts[["x_dim"]])
-      y_pos       <- which(nc_var_dims == file_opts[["y_dim"]])
+      if (flattened) {
+        values_pos  <- which(nc_var_dims == file_opts[["values_dim"]])
+        rdv         <- c("values_dim")
+      } else {
+        x_pos       <- which(nc_var_dims == file_opts[["x_dim"]])
+        y_pos       <- which(nc_var_dims == file_opts[["y_dim"]])
+        rdv         <- c("x_dim","y_dim")
+      }
+      rdv <- c(rdv, "z_var", "time_var", "member_var")
 
       geofield_info <- list()
       geofield_info[["name"]] <- paste(
@@ -476,8 +496,8 @@ read_and_transform_netcdf <- function(
       )
       geofield_info[["time"]] <- list()
 
-      start <- rep(1, length(stats::na.omit(unlist(file_opts[c("x_dim", "y_dim", "z_var", "time_var", "member_var")]))))
-      count <- rep(-1, length(stats::na.omit(unlist(file_opts[c("x_dim", "y_dim", "z_var", "time_var", "member_var")]))))
+      start <- rep(1, length(stats::na.omit(unlist(file_opts[rdv]))))
+      count <- rep(-1, length(stats::na.omit(unlist(file_opts[rdv]))))
 
       if (is.element("level", colnames(nc_info))) {
         z_var <- file_opts[["z_var"]]
@@ -529,10 +549,16 @@ read_and_transform_netcdf <- function(
         geofield_info[["time"]][["end"]]      <- nc_info[["leadtime"]][i] / 3600
         geofield_info[["time"]][["stepUnit"]] <- "h"
       }
+      
+      cdata <- ncdf4::ncvar_get(nc_id, nc_info[["nc_param"]][i], start = start, count = count)
+      
+      if (flattened) {
+        cdata <- matrix(as.vector(cdata),nrow = file_opts[["nx"]],ncol = file_opts[["ny"]])
+      }
 
       geofields[[i]] <- meteogrid::as.geofield(
         orientate_data(
-          ncdf4::ncvar_get(nc_id, nc_info[["nc_param"]][i], start = start, count = count),
+          cdata,
           file_opts
         ),
         domain = nc_domain,

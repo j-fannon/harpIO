@@ -16,6 +16,7 @@ get_domain_netcdf <- function(file_name, opts) {
   lat_var   <- opts[["lat_var"]]
   x_rev     <- opts[["x_rev"]]
   y_rev     <- opts[["y_rev"]]
+  val_dim   <- opts[["values_dim"]]
 
   if (inherits(file_name, "ncdf4")) {
     nc_id      <- file_name
@@ -54,8 +55,78 @@ get_domain_netcdf <- function(file_name, opts) {
     # proj4 <- proj4[["value"]]
     proj4 <- get_crs_from_attrs(ncdf4::ncatt_get(nc_id, proj4_var))
   }
+  
+  proj4_orig <- proj4
+  proj4 <- meteogrid::proj4.str2list(proj4)
+  proj4 <- proj4[sapply(proj4, function(x) !is.na(x))]
+  
+  if (!is.null(val_dim)) {
+    
+    nx <- opts[["nx"]]
+    ny <- opts[["ny"]]
+    if (is.null(nx) || is.null(ny)) {
+      stop("nx and ny must be specified for flattened NetCDF files")
+    }
+    if (nc_id[["dim"]][[val_dim]][["len"]] != nx*ny) {
+      stop("The values dimensions does not match nx*ny")
+    }
+    
+    x_start <- 1
+    y_start <- 1
+    x_end   <- nx
+    y_end   <- ny
+    if (x_rev) {
+      x_start <- nx
+      e_end   <- 1
+    }
+    if (y_rev) {
+      y_start <- ny
+      y_end   <- 1
+    }
+    
+    dx <- opts[["dx"]]
+    dy <- opts[["dy"]]
+    if (is.null(dx) || is.null(dy)) {
+      stop("dx and dy must be specified for flattened NetCDF files")
+    }
+    
+    if (is.null(lon_var) || is.null(lat_var)) {
+      stop("lon/lat_var must be specified for flattened NetCDF files")
+    }
+    lon   <- ncdf4::ncvar_get(nc_id,lon_var)
+    lat   <- ncdf4::ncvar_get(nc_id,lat_var)
+    if (length(lon) != nx*ny || length(lat) != nx*ny) {
+      stop("Latitude and longitude arrays must have nx * ny elements.")
+    }
+    if (max(lon) > 180 || min(lon) < -180) {
+      lon <- ifelse(lon > 180, lon - 360, lon)
+    }
+    lon <- matrix(lon,nrow=nx,ncol=ny)
+    lat <- matrix(lat,nrow=nx,ncol=ny)
+    
+    # Get SW/NE
+    SW <- c(lon[x_start,y_start],lat[x_start,y_start])
+    NE <- c(lon[x_end,y_end],lat[x_end,y_end])
+    
+    if (was_closed) ncdf4::nc_close(nc_id)
+    
+    return(
+      structure(
+        list(
+          projection = proj4,
+          nx         = nx,
+          ny         = ny,
+          SW         = SW,
+          NE         = NE,
+          dx         = dx,
+          dy         = dy
+        ),
+        class = "geodomain"
+      )
+    )
+  }
 
-  if (proj4 == "wrf") {
+  if (proj4_orig == "wrf") {
     proj4 <- get_wrf_projection(nc_id)
     nx    <- nc_id[["dim"]][[x_dim]][["len"]]
     ny    <- nc_id[["dim"]][[y_dim]][["len"]]
@@ -114,9 +185,6 @@ get_domain_netcdf <- function(file_name, opts) {
       y  <- seq(0, by = dy, length.out = ny)
     }
   }
-
-  proj4 <- meteogrid::proj4.str2list(proj4)
-  proj4 <- proj4[sapply(proj4, function(x) !is.na(x))]
 
   x_start <- 1
   y_start <- 1
