@@ -105,8 +105,16 @@ get_domain_netcdf <- function(file_name, opts) {
     lat <- matrix(lat,nrow=nx,ncol=ny)
     
     # Get SW/NE
-    SW <- c(lon[x_start,y_start],lat[x_start,y_start])
-    NE <- c(lon[x_end,y_end],lat[x_end,y_end])
+    if (is.null(opts[["SW"]])){
+      SW <- c(lon[x_start,y_start],lat[x_start,y_start])
+    } else {
+      SW <- opts[["SW"]]
+    }
+    if (is.null(opts[["NE"]])) {
+      NE <- c(lon[x_end,y_end],lat[x_end,y_end])
+    } else {
+      NE <- opts[["NE"]]
+    }
     
     if (was_closed) ncdf4::nc_close(nc_id)
     
