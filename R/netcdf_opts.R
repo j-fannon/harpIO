@@ -100,7 +100,9 @@ netcdf_opts <- function(
   force_param_name = FALSE,
   values_dim       = NULL,
   nx               = NULL,
-  ny               = NULL
+  ny               = NULL,
+  SW               = NULL,
+  NE               = NULL
 )  {
 
   options_set <- match.arg(options_set)
@@ -164,6 +166,8 @@ netcdf_opts <- function(
       dy         <- 2500
       nx         <- if(is.null(nx)){nx<-529}else{NULL}
       ny         <- if(is.null(ny)){ny<-489}else{NULL}
+      SW         <- c(-14.609,46.834)
+      NE         <- c(2.141972,59.601649)
     },
     "uwcw_netcdf" = {
       proj4      <- "+proj=lcc +lat_1=55.5 +lat_2=55.5 +lon_0=-8 +R=6371229"
@@ -172,6 +176,8 @@ netcdf_opts <- function(
       dy         <- 2000
       nx         <- if(is.null(nx)){nx<-1909}else{NULL}
       ny         <- if(is.null(ny)){ny<-1609}else{NULL}
+      SW         <- c(-25.44676,39.63901)
+      NE         <- v(40.15104,62.67121)
     }
 
   )
@@ -197,6 +203,8 @@ netcdf_opts <- function(
     force_param_name = force_param_name,
     values_dim       = values_dim,
     nx               = nx,
-    ny               = ny
+    ny               = ny,
+    SW               = SW,
+    NE               = NE
   )
 }
