@@ -207,6 +207,7 @@ read_forecast <- function(
   param_defs           = getExportedValue("harpIO", "harp_params"),
   output_file_opts     = fctable_opts(),
   return_data          = FALSE,
+  return_write_object  = FALSE,
   merge_lags           = TRUE,
   show_progress        = TRUE,
   stop_on_fail         = FALSE,
@@ -580,6 +581,9 @@ read_forecast <- function(
           )
         ))
 
+        if ((return_data) && (return_write_object)){
+          function_output[[list_counter]] <- data_df
+        }      
         write_forecast(data_df, output_file_opts)
 
       } else {
@@ -604,6 +608,10 @@ read_forecast <- function(
     if (length(function_output) < 1) {
       warning("No data to return.", call. = FALSE, immediate. = TRUE)
       return(invisible(NULL))
+    }
+    
+    if (return_write_object) {
+      return(function_output)
     }
 
     function_output <- dplyr::bind_rows(function_output)

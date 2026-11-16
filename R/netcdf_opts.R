@@ -170,14 +170,14 @@ netcdf_opts <- function(
       NE         <- c(2.141972,59.601649)
     },
     "uwcw_netcdf" = {
-      proj4      <- "+proj=lcc +lat_1=55.5 +lat_2=55.5 +lon_0=-8 +R=6371229"
+      proj4      <- "+proj=lcc +lat_1=55.5 +lat_2=55.5 +lon_0=352 +R=6371229"
       values_dim <- "values"
       dx         <- 2000
       dy         <- 2000
       nx         <- if(is.null(nx)){nx<-1909}else{NULL}
       ny         <- if(is.null(ny)){ny<-1609}else{NULL}
-      SW         <- c(-25.44676,39.63901)
-      NE         <- v(40.15104,62.67121)
+      SW         <- c(-25.44675,39.63901)
+      NE         <- c(40.15105,62.67120)
     }
 
   )
