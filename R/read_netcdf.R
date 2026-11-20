@@ -329,6 +329,10 @@ get_nc_info <- function(nc_param, param, nc_id, info_df) {
   if (!is.na(param[["opts"]][["member_var"]])) {
     info_df[["member"]] <- list(ncdf4::ncvar_get(nc_id, param[["opts"]][["member_var"]]))
     info_df             <- tidyr::unnest(info_df, .data[["member"]])
+  } else if (grepl("_mbr[0-9]+\\.nc$", nc_id$filename)) {
+    info_df[["member"]] <- as.integer(
+      sub(".*_mbr([0-9]+)\\.nc$", "\\1", basename(nc_id$filename))
+    )
   }
 
   param_units <- ncdf4::ncatt_get(nc_id, nc_param, "units")
@@ -513,11 +517,13 @@ read_and_transform_netcdf <- function(
       }
 
       if (is.element("member", colnames(nc_info))) {
+        if (!is.na(file_opts[["member_var"]])) {
         nc_members                     <- ncdf4::ncvar_get(nc_id, file_opts[["member_var"]])
         nc_members                     <- as.numeric(gsub("[[:alpha:]]|[[:punct:]]", "", nc_members))
         member_pos                     <- which(nc_var_dims == file_opts[["member_var"]])
         start[member_pos]              <- which(nc_members == nc_info[["member"]][i])
         count[member_pos]              <- 1
+        }
         geofield_info[["member"]]      <- nc_info[["member"]][i]
       }
 
